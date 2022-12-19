@@ -22,9 +22,11 @@ class FetchError(Exception):
 def notify(smtp: str, recipients: list, subject: str, content: str):
     with open(smtp, 'r') as pwf:
         smtp_data = base64.b64decode(pwf.read())
-    smtp_addr, smtp_port, sender, password = smtp_data.split(':')
+    smtp_addr, smtp_port, sender, password = smtp_data.split(bytes(':', 'ascii'))
+    sender = sender.decode('utf-8')
+    password = password.decode('utf-8')
 
-    msg = MIMEText(content)
+    msg = MIMEText(content, 'plain')
     msg['Subject'] = subject
     msg['From'] = sender
     msg['To'] = ', '.join(recipients)
@@ -42,8 +44,7 @@ def get_current_wattrouter_state(address: str, root_element: str = 'meas') -> et
         raise FetchError('Wattrouter not reachable on {}'.format(address))
     
     doc = etree.XML(req.content)
-    root = doc.find(root_element)
-    if not root:
+    if doc is None or doc.tag != root_element:
         raise FetchError('Did not find root element ({}) in response'.format(root_element))
     return doc
 
@@ -52,7 +53,7 @@ def rate_state(address: str, rate_element: str = 'ILT', root_element: str = 'mea
     state = get_current_wattrouter_state(address, root_element=root_element)
 
     low_rate = state.find(rate_element)
-    if not low_rate:
+    if low_rate is None:
         raise FetchError('Did not find rate element ({}) in response'.format(rate_element))
     
     try:
@@ -70,7 +71,7 @@ def main():
     parser.add_argument('-s', '--smtp', default='/opt/etc/overmind/.notification')
     parser.add_argument('-r', '--recipient', action="extend", nargs="+", type=str)
     parser.add_argument('-u', '--subject', default='[overmind] Změna tarifu')
-    parser.add_argument('-t', '--template', default='Byla zaznamenána změna tarifu ceny elektrické energie na: \{\}')
+    parser.add_argument('-t', '--template', default='Byla zaznamenána změna tarifu ceny elektrické energie na: {}')
     parser.add_argument('--hr', default='VT')
     parser.add_argument('--lr', default='NT')
     args = parser.parse_args()
@@ -80,7 +81,7 @@ def main():
         with open(STATUS_CACHE, 'r') as cache:
             last_rate = int(cache.read())
         with open(STATUS_CACHE, 'w') as cache:
-            cache.write(curr_rate)
+            cache.write(str(curr_rate))
     except FetchError as ex:
         notify(args.smtp, args.recipient, args.subject, 'Failed to fetch state: {}'.format(str(ex)))
     except OSError as ex:
