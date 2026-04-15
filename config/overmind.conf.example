@@ -1,0 +1,79 @@
+---
+
+# Weather API configuration (OpenWeatherMap)
+weather:
+  api_key: your_api_key_here
+  location:
+    id: 3070720
+    name: Mikulov
+    coord:
+      lon: 16.6378
+      lat: 48.805561
+
+# Wattrouter device configuration
+wattrouter:
+  url: http://192.168.1.100
+  username: admin
+  password: your_password_here
+
+  # Output controlling the boiler/water heater
+  # Default is O5 (Bojler) based on typical Wattrouter configuration
+  output_id: O5
+
+# Temperature sensor configuration (Raspberry Pi GPIO)
+temperature:
+  # DS18B20 sensor ID (check /sys/bus/w1/devices/ for your sensor ID)
+  sensor_id: 28-0000072f8b4a
+
+  # Base path for 1-Wire devices
+  gpio_path: /sys/bus/w1/devices
+
+# Controller settings
+controller:
+  # Target water temperature in Celsius
+  target_temperature: 45.0
+
+  # Hysteresis band in Celsius (prevents rapid switching)
+  # Heating turns ON when temp < (target - hysteresis/2)
+  # Heating turns OFF when temp > (target + hysteresis/2)
+  hysteresis: 2.0
+
+  # Control loop interval in seconds
+  control_interval: 60
+
+  # Weather-aware control
+  # When enabled, controller won't force heating if it's sunny
+  weather_enabled: true
+
+  # Maximum cloud coverage percentage to consider "sunny"
+  # Below this value, the controller will wait for sun instead of heating
+  max_cloud_coverage: 40
+
+  # Safety limits
+  max_temperature: 80.0
+  min_temperature: 5.0
+
+# Notification settings (optional)
+notifications:
+  enabled: false
+
+  # Email notifications
+  email:
+    enabled: false
+    smtp_server: smtp.gmail.com
+    smtp_port: 587
+    from_address: overmind@example.com
+    to_addresses:
+      - admin@example.com
+
+  # Temperature thresholds for alerts
+  alerts:
+    high_temp_threshold: 75.0
+    low_temp_threshold: 10.0
+
+# Logging configuration
+logging:
+  level: INFO
+  file: /var/log/overmind/overmind.log
+  max_bytes: 10485760  # 10MB
+  backup_count: 5

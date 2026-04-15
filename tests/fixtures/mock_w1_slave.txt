@@ -1,0 +1,2 @@
+6d 01 4b 46 7f ff 0c 10 3c : crc=3c YES
+6d 01 4b 46 7f ff 0c 10 3c t=22625
